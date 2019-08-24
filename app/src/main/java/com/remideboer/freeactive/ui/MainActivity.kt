@@ -1,13 +1,12 @@
-package com.remideboer.freeactive
+package com.remideboer.freeactive.ui
 
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import com.remideboer.freeactive.R
 
 import kotlinx.android.synthetic.main.activity_main.*
-import org.jetbrains.anko.toast
 
 class MainActivity : AppCompatActivity() {
 
@@ -15,6 +14,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
+
+        toolbar.setLogo(R.drawable.logo_running)
 
         fab.setOnClickListener { view ->
             TODO("START FOREGROUND TRACKING SERVICE")
