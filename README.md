@@ -29,6 +29,7 @@ displays
 - distance
 
 #### Store activity
+use ObjectBox for local storage
 option to discard at running activity/cancel
 could use popup for that
 no summary screen at first, 
