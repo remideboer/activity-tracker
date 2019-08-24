@@ -1,10 +1,13 @@
 package com.remideboer.freeactive.ui
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import androidx.core.content.ContextCompat
 import com.remideboer.freeactive.R
+import com.remideboer.freeactive.services.ActivityTrackingForegroundService
 
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -18,7 +21,8 @@ class MainActivity : AppCompatActivity() {
         toolbar.setLogo(R.drawable.logo_running)
 
         fab.setOnClickListener { view ->
-            TODO("START FOREGROUND TRACKING SERVICE")
+
+            ContextCompat.startForegroundService(this, Intent(this, ActivityTrackingForegroundService::class.java))
         }
     }
 

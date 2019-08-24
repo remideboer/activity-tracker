@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Free Active</string>
     <string name="action_settings">Settings</string>
+    <string name="notification_stop">stop</string>
+    <string name="notification_resume">resume</string>
+    <string name="notification_pause">pause</string>
 </resources>
