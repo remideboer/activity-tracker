@@ -10,6 +10,8 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
+import com.google.android.gms.location.*
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import com.remideboer.freeactive.App
 import com.remideboer.freeactive.R
@@ -26,12 +28,17 @@ private const val ACTION_RESUME = "RESUME"
 
 private const val DELAY_INTERVAL = 1000L
 
+private val MINIMAL_DISPLACEMENT = 10.0 // in meters
+
 /**
  * Tracks current ongoing activity
  */
 class ActivityTrackingForegroundService : Service() {
 
     private val TAG = ActivityTrackingForegroundService::class.java.simpleName
+    private val fusedLocationClient: FusedLocationProviderClient by lazy(LazyThreadSafetyMode.NONE) {
+        LocationServices.getFusedLocationProviderClient(this)
+    }
     private val notificationManager: NotificationManager by lazy(LazyThreadSafetyMode.NONE) {
         getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     }
@@ -80,10 +87,43 @@ class ActivityTrackingForegroundService : Service() {
                 "H:mm:ss",
                 true
             )}
-            Afstand: ${SphericalUtil.computeLength(ActivityTracker.getReadOnlyRoute())}
-        """.trimIndent()
+            Afstand: %.0f meter
+        """.trimIndent().format(SphericalUtil.computeLength(ActivityTracker.getReadOnlyRoute()))
             updateNotification(text)
             handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
+        }
+    }
+
+    private lateinit var lastTrackedLocation: LatLng
+    private val locationRequest by lazy(LazyThreadSafetyMode.NONE) {
+        LocationRequest.create()?.apply {
+            interval = 10000
+            fastestInterval = 5000
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
+    }
+
+    private val locationCallback by lazy {
+        object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                locationResult?.let {
+
+                    // check if minimal displacement is reached to update
+                    val newLatLng = LatLng(it.lastLocation.latitude, it.lastLocation.longitude)
+
+                    if (SphericalUtil.computeDistanceBetween(
+                            newLatLng,
+                            lastTrackedLocation
+                        ) > MINIMAL_DISPLACEMENT
+                    ) {
+                        lastTrackedLocation = newLatLng
+                        if (ActivityTracker.isTracking()) {
+                            Log.d(TAG, "adding latln:${newLatLng} to route")
+                            ActivityTracker.addPosition(newLatLng)
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -102,6 +142,13 @@ class ActivityTrackingForegroundService : Service() {
     override fun onCreate() {
         // create notificationBuilder
         startForeground(NOTIFICATION_CODE, notificationBuilder.build())
+
+        // starting updates as soon as possible to have a decent location
+        fusedLocationClient.lastLocation.addOnSuccessListener {
+            lastTrackedLocation = LatLng(it.latitude, it.longitude)
+        }
+
+        startLocationUpdates()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -111,14 +158,17 @@ class ActivityTrackingForegroundService : Service() {
                 ACTION_PAUSE -> {
                     ActivityTracker.pause()
                     handler.removeCallbacks(notificationUpdater)
+                    stopLocationUpdates()
                 }
                 ACTION_RESUME -> {
                     ActivityTracker.resume()
                     handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
+                    startLocationUpdates()
                 }
                 ACTION_STOP -> {
                     ActivityTracker.stop()
                     handler.removeCallbacks(notificationUpdater)
+                    stopLocationUpdates()
                     stopForeground(true)
                     stopSelf()
                 }
@@ -147,5 +197,14 @@ class ActivityTrackingForegroundService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(notificationUpdater)
+        stopLocationUpdates()
+    }
+
+    private fun startLocationUpdates() {
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
+    }
+
+    private fun stopLocationUpdates() {
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 }
