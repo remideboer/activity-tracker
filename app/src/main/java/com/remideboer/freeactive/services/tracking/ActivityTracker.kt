@@ -78,7 +78,7 @@ object ActivityTracker {
     }
 
     fun removeStateChangeListener(changeListener: StateChangeListener) {
-
+        stateChangeListeners.remove(changeListener)
     }
 
     fun reset() {

@@ -2,6 +2,7 @@ package com.remideboer.freeactive.services.tracking
 
 import com.remideboer.freeactive.services.tracking.ActivityTracker.StateChangeListener
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.greaterThan
 import org.junit.After
@@ -267,11 +268,11 @@ class ActivityTrackerTest {
 
     @Test
     fun removeStateChangeListener(){
-        var expected01 = 3
-        var listener01VarToBeUpdated = expected01 // use this variable to check listener is called
+        var updateWith = 3
+        var result = 5 // use this variable to check listener is called
 
         val stateChangeListener: StateChangeListener = object: StateChangeListener {
-            override fun onStart(){ listener01VarToBeUpdated = expected01 }
+            override fun onStart(){ result = updateWith } // must not be called
             override fun onStop(){}
             override fun onPause(){}
             override fun onResume(){}
@@ -281,7 +282,7 @@ class ActivityTrackerTest {
         ActivityTracker.removeStateChangeListener(stateChangeListener) // now this var should remain unchanged
         ActivityTracker.start()
 
-        assertThat(listener01VarToBeUpdated, `is`(expected01))
+        assertThat(result, not(updateWith))
 
     }
 
