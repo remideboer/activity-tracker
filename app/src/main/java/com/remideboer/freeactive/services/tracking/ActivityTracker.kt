@@ -28,6 +28,9 @@ object ActivityTracker {
     private val route: MutableList<LatLng> by lazy(LazyThreadSafetyMode.NONE) { mutableListOf<LatLng>() }
     private val stateChangeListeners: MutableList<StateChangeListener> by lazy(LazyThreadSafetyMode.NONE) { mutableListOf<StateChangeListener>() }
     private var endTime: Instant? = null
+    /**
+     * Keeps track of timing data, except end time UTC
+     */
     private val stopWatch by lazy { StopWatch() }
 
     fun start() {
