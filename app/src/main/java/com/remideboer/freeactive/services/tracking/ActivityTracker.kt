@@ -1,5 +1,6 @@
 package com.remideboer.freeactive.services.tracking
 
+import com.google.android.gms.maps.model.LatLng
 import org.apache.commons.lang3.time.StopWatch
 import org.threeten.bp.Duration
 import org.threeten.bp.Instant
@@ -24,6 +25,7 @@ object ActivityTracker {
         fun onResume()
     }
 
+    private val route: MutableList<LatLng> by lazy(LazyThreadSafetyMode.NONE) { mutableListOf<LatLng>() }
     private val stateChangeListeners: MutableList<StateChangeListener> by lazy(LazyThreadSafetyMode.NONE) { mutableListOf<StateChangeListener>() }
     private var endTime: Instant? = null
     private val stopWatch by lazy { StopWatch() }
@@ -88,6 +90,15 @@ object ActivityTracker {
 
         stopWatch.reset()
         endTime = null
+        route.clear()
+    }
+
+    fun addPosition(position: LatLng) {
+        route.add(position)
+    }
+
+    fun getReadOnlyRoute(): List<LatLng> {
+        return route.toMutableList()
     }
 
 }

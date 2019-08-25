@@ -1,9 +1,11 @@
 package com.remideboer.freeactive.services.tracking
 
+import com.google.android.gms.maps.model.LatLng
 import com.remideboer.freeactive.services.tracking.ActivityTracker.StateChangeListener
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.contains
 import org.hamcrest.Matchers.greaterThan
 import org.junit.After
 import org.junit.Assert.assertNull
@@ -283,6 +285,26 @@ class ActivityTrackerTest {
         ActivityTracker.start()
 
         assertThat(result, not(updateWith))
+    }
+
+    @Test
+    fun addLatLng(){
+        // test adding latLng
+        // retrieve route as list
+        val positions = listOf(
+            LatLng(51.606077, 5.555630),
+            LatLng(52.606077, 5.655630),
+            LatLng(53.606077, 5.755630)
+        )
+        ActivityTracker.addPosition(positions[0])
+        ActivityTracker.addPosition(positions[1])
+        ActivityTracker.addPosition(positions[2])
+
+        val route: List<LatLng> = ActivityTracker.getReadOnlyRoute()
+
+        assertThat(route[0], `is`(positions[0]))
+        assertThat(route[1], `is`(positions[1]))
+        assertThat(route[2], `is`(positions[2]))
 
     }
 
