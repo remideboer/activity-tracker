@@ -88,7 +88,7 @@ class ActivityTrackingForegroundService : Service() {
                 true
             )}
             Afstand: %.0f meter
-        """.trimIndent().format(SphericalUtil.computeLength(ActivityTracker.getReadOnlyRoute()))
+        """.trimIndent().format(ActivityTracker.getDistance())
             updateNotification(text)
             handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
         }

@@ -1,6 +1,7 @@
 package com.remideboer.freeactive.services.tracking
 
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.SphericalUtil
 import org.apache.commons.lang3.time.StopWatch
 import org.threeten.bp.Duration
 import org.threeten.bp.Instant
@@ -107,6 +108,13 @@ object ActivityTracker {
 
     fun isTracking(): Boolean {
         return stopWatch.isStarted
+    }
+
+    /**
+     * calculates length of the route in meters
+     */
+    fun getDistance(): Double {
+        return SphericalUtil.computeLength(route)
     }
 
 }
