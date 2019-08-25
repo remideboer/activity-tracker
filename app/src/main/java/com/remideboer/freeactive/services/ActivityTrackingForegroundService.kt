@@ -33,6 +33,7 @@ class ActivityTrackingForegroundService : Service() {
             .setContentTitle(resources.getString(R.string.notification_tracker_title))
             .setSmallIcon(R.drawable.ic_icon_eye)
             .setOngoing(true) // so it can't be dismissed by the user
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             // PRIORITY_MAX shows expanded notificationBuilder to show action button (add setWhen(0) for older versions if needed)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             // icons don't show using icons here, only needed for older version. Use custom layout for icons
