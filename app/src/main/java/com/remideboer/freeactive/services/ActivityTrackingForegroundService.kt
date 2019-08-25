@@ -1,5 +1,6 @@
 package com.remideboer.freeactive.services
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -72,12 +73,12 @@ class ActivityTrackingForegroundService : Service() {
         intent?.let {
             when (it.action) {
                 ACTION_PAUSE -> {
-                    notificationBuilder.setContentText("Paused at ${Instant.now()}")
-                    notificationManager.notify(NOTIFICATION_CODE, notificationBuilder.build())
+                    val text = "Paused at ${Instant.now()}"
+                    updateNotification(text)
                 }
                 ACTION_RESUME -> {
-                    notificationBuilder.setContentText("Resumed at ${Instant.now()}")
-                    notificationManager.notify(NOTIFICATION_CODE, notificationBuilder.build())
+                    val text = "Resumed at ${Instant.now()}"
+                    updateNotification(text)
                 }
                 ACTION_STOP -> {
                     stopSelf()
@@ -91,5 +92,13 @@ class ActivityTrackingForegroundService : Service() {
         // start up activity tracking
 
         return START_STICKY
+    }
+
+    private fun updateNotification(text: String) {
+        notificationBuilder.setContentText(text)
+        notificationBuilder.setStyle(
+            NotificationCompat.BigTextStyle()
+            .bigText(text))
+        notificationManager.notify(NOTIFICATION_CODE, notificationBuilder.build())
     }
 }
