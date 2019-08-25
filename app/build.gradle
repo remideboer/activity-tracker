@@ -33,6 +33,7 @@ dependencies {
     implementation "org.jetbrains.anko:anko:$anko_version"
     implementation 'com.jakewharton.threetenabp:threetenabp:1.2.1'
     implementation 'org.apache.commons:commons-lang3:3.9'
+    implementation 'com.google.maps.android:android-maps-utils:0.5'
 
     /* Test Dependencies */
     testImplementation 'junit:junit:4.12'

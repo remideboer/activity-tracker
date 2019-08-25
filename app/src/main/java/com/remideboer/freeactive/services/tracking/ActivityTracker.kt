@@ -35,6 +35,7 @@ object ActivityTracker {
 
     fun start() {
         // starts activity tracking using Apache Stopwatch
+        stopWatch.reset()
         stopWatch.start()
         // update listeners
         for (listener in stateChangeListeners){
@@ -102,6 +103,10 @@ object ActivityTracker {
 
     fun getReadOnlyRoute(): List<LatLng> {
         return route.toMutableList()
+    }
+
+    fun isTracking(): Boolean {
+        return stopWatch.isStarted
     }
 
 }

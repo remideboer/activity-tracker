@@ -6,10 +6,15 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.google.maps.android.SphericalUtil
 import com.remideboer.freeactive.App
 import com.remideboer.freeactive.R
+import com.remideboer.freeactive.services.tracking.ActivityTracker
+import org.apache.commons.lang3.time.DurationFormatUtils
 import org.threeten.bp.Instant
 
 
@@ -18,6 +23,8 @@ private const val NOTIFICATION_CODE = 123
 private const val ACTION_STOP = "STOP"
 private const val ACTION_PAUSE = "PAUSE"
 private const val ACTION_RESUME = "RESUME"
+
+private const val DELAY_INTERVAL = 1000L
 
 /**
  * Tracks current ongoing activity
@@ -56,6 +63,16 @@ class ActivityTrackingForegroundService : Service() {
     private val intent by lazy(LazyThreadSafetyMode.NONE) {
         Intent(this, ActivityTrackingForegroundService::class.java)
     }
+    private val handler by lazy { Handler() }
+
+    private val notificationUpdater: Runnable by lazy { Runnable {
+        val text = """
+            Duur: ${DurationFormatUtils.formatDuration(ActivityTracker.getDuration().toMillis(), "H:mm:ss", true)}
+            Afstand: ${SphericalUtil.computeLength(ActivityTracker.getReadOnlyRoute())}
+        """.trimIndent()
+        updateNotification(text)
+        handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
+    } }
 
     override fun onBind(intent: Intent): IBinder {
         TODO("Return the communication channel to the service.")
@@ -69,28 +86,39 @@ class ActivityTrackingForegroundService : Service() {
         )
     }
 
+    override fun onCreate() {
+        // create notificationBuilder
+        startForeground(NOTIFICATION_CODE, notificationBuilder.build())
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
         intent?.let {
             when (it.action) {
                 ACTION_PAUSE -> {
-                    val text = "Paused at ${Instant.now()}"
-                    updateNotification(text)
+                    ActivityTracker.pause()
+                    handler.removeCallbacks(notificationUpdater)
                 }
                 ACTION_RESUME -> {
-                    val text = "Resumed at ${Instant.now()}"
-                    updateNotification(text)
+                    ActivityTracker.resume()
+                    handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
                 }
                 ACTION_STOP -> {
+                    ActivityTracker.stop()
+                    handler.removeCallbacks(notificationUpdater)
+                    stopForeground(true)
                     stopSelf()
                 }
+                else -> Log.d(TAG, "default action")
             }
         }
 
-        // create notificationBuilder
-        startForeground(NOTIFICATION_CODE, notificationBuilder.build())
-
         // start up activity tracking
+        if(ActivityTracker.isTracking().not()){
+            ActivityTracker.start()
+        }
+
+        handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
 
         return START_STICKY
     }
@@ -101,5 +129,9 @@ class ActivityTrackingForegroundService : Service() {
             NotificationCompat.BigTextStyle()
             .bigText(text))
         notificationManager.notify(NOTIFICATION_CODE, notificationBuilder.build())
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacks(notificationUpdater)
     }
 }
