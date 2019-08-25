@@ -117,4 +117,14 @@ object ActivityTracker {
         return SphericalUtil.computeLength(route)
     }
 
+    /**
+     * Calculates the current average speed in km/h based on route length
+     * and active tracked time
+     */
+    fun getAverageSpeedKMPH(): Double {
+        return averageSpeedMPS() * 3.6
+    }
+
+    private fun averageSpeedMPS() = getDistance() / getDuration().seconds
+
 }

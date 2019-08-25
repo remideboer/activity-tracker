@@ -88,7 +88,8 @@ class ActivityTrackingForegroundService : Service() {
                 true
             )}
             Afstand: %.0f meter
-        """.trimIndent().format(ActivityTracker.getDistance())
+            Gemiddelde snelheid: %.0f km/u
+        """.trimIndent().format(ActivityTracker.getDistance(), ActivityTracker.getAverageSpeedKMPH())
             updateNotification(text)
             handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
         }
