@@ -1,6 +1,5 @@
 package com.remideboer.freeactive.services
 
-import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -10,12 +9,13 @@ import android.os.Handler
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.TaskStackBuilder
 import com.google.maps.android.SphericalUtil
 import com.remideboer.freeactive.App
 import com.remideboer.freeactive.R
 import com.remideboer.freeactive.services.tracking.ActivityTracker
+import com.remideboer.freeactive.ui.MainActivity
 import org.apache.commons.lang3.time.DurationFormatUtils
-import org.threeten.bp.Instant
 
 
 private const val NOTIFICATION_CODE = 123
@@ -38,6 +38,7 @@ class ActivityTrackingForegroundService : Service() {
     private val notificationBuilder by lazy(LazyThreadSafetyMode.NONE) {
         NotificationCompat.Builder(this, App.NOTIFICATION_CHANNEL_ID)
             .setContentTitle(resources.getString(R.string.notification_tracker_title))
+            .setContentIntent(mainIntent)
             .setSmallIcon(R.drawable.ic_icon_eye)
             .setOngoing(true) // so it can't be dismissed by the user
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -47,32 +48,44 @@ class ActivityTrackingForegroundService : Service() {
             .addAction(
                 R.drawable.ic_icon_stop,
                 resources.getString(R.string.notification_stop),
-                createPendingIntent(intent.apply { action = ACTION_STOP })
+                createPendingIntent(serviceIntent.apply { action = ACTION_STOP })
             )
             .addAction(
                 R.drawable.ic_icon_pause,
                 resources.getString(R.string.notification_pause),
-                createPendingIntent(intent.apply { action = ACTION_PAUSE })
+                createPendingIntent(serviceIntent.apply { action = ACTION_PAUSE })
             )
             .addAction(
                 R.drawable.ic_icon_play,
                 resources.getString(R.string.notification_resume),
-                createPendingIntent(intent.apply { action = ACTION_RESUME })
+                createPendingIntent(serviceIntent.apply { action = ACTION_RESUME })
             )
     }
-    private val intent by lazy(LazyThreadSafetyMode.NONE) {
+    private val mainIntent by lazy(LazyThreadSafetyMode.NONE) {
+        TaskStackBuilder.create(this).run {
+            addNextIntentWithParentStack(Intent(applicationContext, MainActivity::class.java))
+            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
+    }
+    private val serviceIntent by lazy(LazyThreadSafetyMode.NONE) {
         Intent(this, ActivityTrackingForegroundService::class.java)
     }
     private val handler by lazy { Handler() }
 
-    private val notificationUpdater: Runnable by lazy { Runnable {
-        val text = """
-            Duur: ${DurationFormatUtils.formatDuration(ActivityTracker.getDuration().toMillis(), "H:mm:ss", true)}
+    private val notificationUpdater: Runnable by lazy {
+        Runnable {
+            val text = """
+            Duur: ${DurationFormatUtils.formatDuration(
+                ActivityTracker.getDuration().toMillis(),
+                "H:mm:ss",
+                true
+            )}
             Afstand: ${SphericalUtil.computeLength(ActivityTracker.getReadOnlyRoute())}
         """.trimIndent()
-        updateNotification(text)
-        handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
-    } }
+            updateNotification(text)
+            handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
+        }
+    }
 
     override fun onBind(intent: Intent): IBinder {
         TODO("Return the communication channel to the service.")
@@ -114,7 +127,7 @@ class ActivityTrackingForegroundService : Service() {
         }
 
         // start up activity tracking
-        if(ActivityTracker.isTracking().not()){
+        if (ActivityTracker.isTracking().not()) {
             ActivityTracker.start()
         }
 
@@ -127,7 +140,8 @@ class ActivityTrackingForegroundService : Service() {
         notificationBuilder.setContentText(text)
         notificationBuilder.setStyle(
             NotificationCompat.BigTextStyle()
-            .bigText(text))
+                .bigText(text)
+        )
         notificationManager.notify(NOTIFICATION_CODE, notificationBuilder.build())
     }
 
