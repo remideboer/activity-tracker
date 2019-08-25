@@ -36,7 +36,7 @@ object ActivityTracker {
 
     fun start() {
         // starts activity tracking using Apache Stopwatch
-        stopWatch.reset()
+        reset() // reset data
         stopWatch.start()
         // update listeners
         for (listener in stateChangeListeners){

@@ -90,6 +90,7 @@ class ActivityTrackerTest {
         ActivityTracker.reset()
 
         assertThat(ActivityTracker.getDuration(), `is`(Duration.ZERO))
+        assertThat(ActivityTracker.getReadOnlyRoute().size, `is`(0))
         assertNull(ActivityTracker.getEndTimestamp())
 
         exception.expect(java.lang.IllegalStateException::class.java)

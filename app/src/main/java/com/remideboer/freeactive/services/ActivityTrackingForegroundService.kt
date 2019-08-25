@@ -197,6 +197,7 @@ class ActivityTrackingForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        ActivityTracker.reset()
         handler.removeCallbacks(notificationUpdater)
         stopLocationUpdates()
     }
