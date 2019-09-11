@@ -19,7 +19,7 @@ Start Activity Tracking tracks:
 - [x] Use foreground service to track
 - [x] displays ongoing notification with activity metrics 
 - [x] Stop button on notification, 
-    - [ ] stores activity on stop. 
+    - [x] stores activity on stop. 
 - [x] Pause and Resume buttons on notification
 
 #### OnGoing Activity Screen
