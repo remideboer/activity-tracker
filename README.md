@@ -37,7 +37,7 @@ could use popup for that
 no summary screen at first, 
 stop goes back to start and user can select last activity there
 
-- [ ] storing activities after stop
+- [x] storing activities after stop
 
 #### display stats
 on home screen
