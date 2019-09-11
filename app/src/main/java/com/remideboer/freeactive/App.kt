@@ -8,6 +8,7 @@ import android.app.NotificationManager
 import android.os.Build
 import android.util.Log
 import com.jakewharton.threetenabp.AndroidThreeTen
+import com.remideboer.freeactive.dataaccess.ObjectBox
 import org.jetbrains.anko.doFromSdk
 
 
@@ -23,8 +24,9 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        AndroidThreeTen.init(this);
+        AndroidThreeTen.init(this)
         createNotificationChannels()
+        ObjectBox.init(this)
     }
 
     @SuppressLint("NewApi")
