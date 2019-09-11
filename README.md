@@ -10,23 +10,25 @@ Use FAB to start activity
 
 #### Track Physical activity
 Start Activity Tracking tracks:
-- duration
-- average speed
-- route
-- current speed
-- distance
+- [x] duration 
+- [x] average speed
+- [x] route
+- [x] current speed
+- [x] distance
 	
-Use foreground service to track, no OnGoing Activity Screen yet
-Stop button on notification, immediately stores. Later may
-navigate to Activity summary screen.
+- [x] Use foreground service to track
+- [x] displays ongoing notification with activity metrics 
+- [x] Stop button on notification, 
+    - [ ] stores activity on stop. 
+- [x] Pause and Resume buttons on notification
 
 #### OnGoing Activity Screen
 updates every seconds
 displays
-- duration
-- average speed
-- current speed
-- distance
+- [ ] duration
+- [ ] average speed
+- [ ] current speed
+- [ ] distance
 
 #### Store activity
 use ObjectBox for local storage
@@ -34,6 +36,8 @@ option to discard at running activity/cancel
 could use popup for that
 no summary screen at first, 
 stop goes back to start and user can select last activity there
+
+- [ ] storing activities after stop
 
 #### display stats
 on home screen
