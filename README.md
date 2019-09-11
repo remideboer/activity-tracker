@@ -74,3 +74,6 @@ into account.
 
 ## Phase 5
 Posting activity and achievements to social media
+
+## Phase 6
+Add timestamp information to positions and display on map
