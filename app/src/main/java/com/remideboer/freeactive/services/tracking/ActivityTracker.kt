@@ -1,10 +1,13 @@
 package com.remideboer.freeactive.services.tracking
 
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.PolyUtil
 import com.google.maps.android.SphericalUtil
+import com.remideboer.freeactive.entities.TrackedActivity
 import org.apache.commons.lang3.time.StopWatch
 import org.threeten.bp.Duration
 import org.threeten.bp.Instant
+import java.lang.IllegalStateException
 
 /**
  * Responsible for tracking activities.
@@ -137,5 +140,19 @@ object ActivityTracker {
     }
 
     private fun averageSpeedMPS() = getDistance() / getDuration().seconds
+
+    fun getTrackedActivity(): TrackedActivity {
+        // stop must have been called else throw IllegalState
+        if (isTracking()) {
+            throw IllegalStateException("ActivityTracker is still running. A TrackedActivity can only be obtained from a stopped ActivityTracker. Call stop first")
+        }
+
+        return TrackedActivity(
+            startInstant = getStartTime(),
+            endInstant = getEndTimestamp(),
+            duration = getDuration(),
+            route = PolyUtil.encode(route)
+        )
+    }
 
 }

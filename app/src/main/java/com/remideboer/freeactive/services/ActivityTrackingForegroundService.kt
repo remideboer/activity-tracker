@@ -15,6 +15,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import com.remideboer.freeactive.App
 import com.remideboer.freeactive.R
+import com.remideboer.freeactive.dataaccess.ObjectBox
+import com.remideboer.freeactive.entities.TrackedActivity
 import com.remideboer.freeactive.services.tracking.ActivityTracker
 import com.remideboer.freeactive.ui.MainActivity
 import org.apache.commons.lang3.time.DurationFormatUtils
@@ -149,39 +151,60 @@ class ActivityTrackingForegroundService : Service() {
         intent?.let {
             when (it.action) {
                 ACTION_PAUSE -> {
-                    ActivityTracker.pause()
-                    handler.removeCallbacks(notificationUpdater)
-                    stopLocationUpdates()
-                    // show paused text
-                    updateNotification(
-                        getActivityTrackingText(),
-                        resources.getString(R.string.notification_tracker_title_tracking_paused) )
+                    processPauseTracking()
                 }
                 ACTION_RESUME -> {
-                    ActivityTracker.resume()
-                    handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
-                    startLocationUpdates()
-                    updateNotification(getActivityTrackingText())
+                    processResumeTracking()
                 }
                 ACTION_STOP -> {
-                    ActivityTracker.stop()
-                    handler.removeCallbacks(notificationUpdater)
-                    stopLocationUpdates()
-                    stopForeground(true)
-                    stopSelf()
+                    processStopTracking()
                 }
                 else -> Log.d(TAG, "default action")
             }
         }
 
+        processStartTracking()
+
+        return START_STICKY
+    }
+
+    private fun processStartTracking() {
         // start up activity tracking
         if (ActivityTracker.isTracking().not()) {
             ActivityTracker.start()
         }
 
         handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
+    }
 
-        return START_STICKY
+    private fun processStopTracking() {
+        ActivityTracker.stop()
+        // store activity
+        ObjectBox.boxStore.boxFor(TrackedActivity::class.java)
+            .put(ActivityTracker.getTrackedActivity())
+
+        handler.removeCallbacks(notificationUpdater)
+        stopLocationUpdates()
+        stopForeground(true)
+        stopSelf()
+    }
+
+    private fun processResumeTracking() {
+        ActivityTracker.resume()
+        handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
+        startLocationUpdates()
+        updateNotification(getActivityTrackingText())
+    }
+
+    private fun processPauseTracking() {
+        ActivityTracker.pause()
+        handler.removeCallbacks(notificationUpdater)
+        stopLocationUpdates()
+        // show paused text
+        updateNotification(
+            getActivityTrackingText(),
+            resources.getString(R.string.notification_tracker_title_tracking_paused)
+        )
     }
 
     private fun updateNotification(text: String, title: String = resources.getString(R.string.notification_tracker_title_tracking_ongoing)) {

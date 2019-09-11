@@ -1,6 +1,7 @@
 package com.remideboer.freeactive.services.tracking
 
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.PolyUtil
 import com.remideboer.freeactive.services.tracking.ActivityTracker.StateChangeListener
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.not
@@ -18,15 +19,15 @@ class ActivityTrackerTest {
 
     @Rule
     @JvmField
-    val exception = ExpectedException.none()
+    val expectedExceptioneption = ExpectedException.none()
 
     @After
-    fun cleanUp(){
+    fun cleanUp() {
         ActivityTracker.reset()
     }
 
     @Test
-    fun getStartTime(){
+    fun getStartTime() {
         ActivityTracker.start()
 
         val startTime = Instant.now()
@@ -38,7 +39,7 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun getDuration(){
+    fun getDuration() {
         val seconds = 5L
         ActivityTracker.start()
 
@@ -54,7 +55,7 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun stopStopsTrackingAndKeepsGivingSameDurationAfterCall(){
+    fun stopStopsTrackingAndKeepsGivingSameDurationAfterCall() {
         val seconds = 10L
         ActivityTracker.start()
 
@@ -71,16 +72,16 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun reset(){
+    fun reset() {
 
-        exception.expect(IllegalStateException::class.java)
+        expectedExceptioneption.expect(IllegalStateException::class.java)
 
         ActivityTracker.reset()
     }
 
 
     @Test
-    fun resetValuesAreSetToZero(){
+    fun resetValuesAreSetToZero() {
 
         ActivityTracker.start()
 
@@ -92,13 +93,13 @@ class ActivityTrackerTest {
         assertThat(ActivityTracker.getReadOnlyRoute().size, `is`(0))
         assertNull(ActivityTracker.getEndTimestamp())
 
-        exception.expect(java.lang.IllegalStateException::class.java)
-        exception.expectMessage("Stopwatch has not been started")
+        expectedExceptioneption.expect(java.lang.IllegalStateException::class.java)
+        expectedExceptioneption.expectMessage("Stopwatch has not been started")
         ActivityTracker.getStartTime()
     }
 
     @Test
-    fun pauseStopsDuration(){
+    fun pauseStopsDuration() {
         val seconds = 2L
         ActivityTracker.start()
         Thread.sleep(seconds * 1000)
@@ -114,7 +115,7 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun resumeContinuesDurationAfterPause(){
+    fun resumeContinuesDurationAfterPause() {
         val seconds = 2L
         ActivityTracker.start()
         Thread.sleep(seconds * 1000)
@@ -136,7 +137,7 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun getEndTimestampGivesUTCWhenStopped(){
+    fun getEndTimestampGivesUTCWhenStopped() {
         val seconds = 2L
         ActivityTracker.start()
         Thread.sleep(seconds * 1000)
@@ -153,23 +154,29 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun startUpdatesListeners(){
+    fun startUpdatesListeners() {
         var expected01 = 3
         var expected02 = 5
         var listener01VarToBeUpdated = 1 // use this variable to check listener is called
         var listener02VarToBeUpdated = 1
-        val changeListener: StateChangeListener = object: StateChangeListener {
-            override fun onStart(){ listener01VarToBeUpdated = expected01 }
-            override fun onStop(){}
-            override fun onPause(){}
-            override fun onResume(){}
+        val changeListener: StateChangeListener = object : StateChangeListener {
+            override fun onStart() {
+                listener01VarToBeUpdated = expected01
+            }
+
+            override fun onStop() {}
+            override fun onPause() {}
+            override fun onResume() {}
         }
 
-        val changeListener2: StateChangeListener = object: StateChangeListener {
-            override fun onStart(){ listener02VarToBeUpdated = expected02 }
-            override fun onStop(){}
-            override fun onPause(){}
-            override fun onResume(){}
+        val changeListener2: StateChangeListener = object : StateChangeListener {
+            override fun onStart() {
+                listener02VarToBeUpdated = expected02
+            }
+
+            override fun onStop() {}
+            override fun onPause() {}
+            override fun onResume() {}
         }
 
         ActivityTracker.addStateChangeListener(changeListener)
@@ -181,23 +188,29 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun stopUpdatesListeners(){
+    fun stopUpdatesListeners() {
         var expected01 = 3
         var expected02 = 5
         var listener01VarToBeUpdated = 1 // use this variable to check listener is called
         var listener02VarToBeUpdated = 1
-        val changeListener: StateChangeListener = object: StateChangeListener {
+        val changeListener: StateChangeListener = object : StateChangeListener {
             override fun onStart() {}
-            override fun onStop(){ listener01VarToBeUpdated = expected01 }
-            override fun onPause(){}
-            override fun onResume(){}
+            override fun onStop() {
+                listener01VarToBeUpdated = expected01
+            }
+
+            override fun onPause() {}
+            override fun onResume() {}
         }
 
-        val changeListener2: StateChangeListener = object: StateChangeListener {
+        val changeListener2: StateChangeListener = object : StateChangeListener {
             override fun onStart() {}
-            override fun onStop(){ listener02VarToBeUpdated = expected02 }
-            override fun onPause(){}
-            override fun onResume(){}
+            override fun onStop() {
+                listener02VarToBeUpdated = expected02
+            }
+
+            override fun onPause() {}
+            override fun onResume() {}
         }
 
         ActivityTracker.addStateChangeListener(changeListener)
@@ -210,23 +223,29 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun pauseUpdatesListeners(){
+    fun pauseUpdatesListeners() {
         var expected01 = 3
         var expected02 = 5
         var listener01VarToBeUpdated = 1 // use this variable to check listener is called
         var listener02VarToBeUpdated = 1
-        val changeListener: StateChangeListener = object: StateChangeListener {
+        val changeListener: StateChangeListener = object : StateChangeListener {
             override fun onStart() {}
-            override fun onStop(){}
-            override fun onPause(){ listener01VarToBeUpdated = expected01 }
-            override fun onResume(){}
+            override fun onStop() {}
+            override fun onPause() {
+                listener01VarToBeUpdated = expected01
+            }
+
+            override fun onResume() {}
         }
 
-        val changeListener2: StateChangeListener = object: StateChangeListener {
+        val changeListener2: StateChangeListener = object : StateChangeListener {
             override fun onStart() {}
-            override fun onStop(){}
-            override fun onPause(){ listener02VarToBeUpdated = expected02 }
-            override fun onResume(){}
+            override fun onStop() {}
+            override fun onPause() {
+                listener02VarToBeUpdated = expected02
+            }
+
+            override fun onResume() {}
         }
 
         ActivityTracker.addStateChangeListener(changeListener)
@@ -239,23 +258,27 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun resumeUpdatesListeners(){
+    fun resumeUpdatesListeners() {
         var expected01 = 3
         var expected02 = 5
         var listener01VarToBeUpdated = 1 // use this variable to check listener is called
         var listener02VarToBeUpdated = 1
-        val changeListener: StateChangeListener = object: StateChangeListener {
+        val changeListener: StateChangeListener = object : StateChangeListener {
             override fun onStart() {}
-            override fun onStop(){}
-            override fun onPause(){}
-            override fun onResume(){ listener01VarToBeUpdated = expected01 }
+            override fun onStop() {}
+            override fun onPause() {}
+            override fun onResume() {
+                listener01VarToBeUpdated = expected01
+            }
         }
 
-        val changeListener2: StateChangeListener = object: StateChangeListener {
+        val changeListener2: StateChangeListener = object : StateChangeListener {
             override fun onStart() {}
-            override fun onStop(){}
-            override fun onPause(){}
-            override fun onResume(){ listener02VarToBeUpdated = expected02 }
+            override fun onStop() {}
+            override fun onPause() {}
+            override fun onResume() {
+                listener02VarToBeUpdated = expected02
+            }
         }
 
         ActivityTracker.addStateChangeListener(changeListener)
@@ -269,15 +292,18 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun removeStateChangeListener(){
+    fun removeStateChangeListener() {
         var updateWith = 3
         var result = 5 // use this variable to check listener is called
 
-        val stateChangeListener: StateChangeListener = object: StateChangeListener {
-            override fun onStart(){ result = updateWith } // must not be called
-            override fun onStop(){}
-            override fun onPause(){}
-            override fun onResume(){}
+        val stateChangeListener: StateChangeListener = object : StateChangeListener {
+            override fun onStart() {
+                result = updateWith
+            } // must not be called
+
+            override fun onStop() {}
+            override fun onPause() {}
+            override fun onResume() {}
         }
 
         ActivityTracker.addStateChangeListener(stateChangeListener)
@@ -288,7 +314,7 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun addLatLng(){
+    fun addLatLng() {
         // test adding latLng
         // retrieve route as list
         val positions = listOf(
@@ -309,7 +335,7 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun start_already_started_resets_data_start_time(){
+    fun start_already_started_resets_data_start_time() {
         ActivityTracker.start()
         val start = ActivityTracker.getStartTime()
         Thread.sleep(2000)
@@ -323,7 +349,7 @@ class ActivityTrackerTest {
     }
 
     @Test
-    fun start_already_started_resets_data_duration(){
+    fun start_already_started_resets_data_duration() {
         // have the second duration be smaller then first
         // that would be impossible without a reset
         ActivityTracker.start()
@@ -338,5 +364,43 @@ class ActivityTrackerTest {
 
         assertThat(duration2.seconds, lessThan(duration1.seconds))
     }
+
+    @Test
+    fun getTrackedActivity_started_and_stopped_gives_correct_data() {
+        val routeList = listOf(
+            LatLng(52.370216, 4.895168), LatLng(52.090736, 5.121420),
+            LatLng(52.957378, 4.758500), LatLng(52.350784, 5.264702)
+        )
+        val encodedRoute = PolyUtil.encode(routeList)
+        val seconds = 2L
+        val sleep = seconds * 1000L
+
+        val startTime = Instant.now().epochSecond
+        ActivityTracker.start()
+        routeList.forEach {
+            ActivityTracker.addPosition(it)
+        }
+
+        Thread.sleep(sleep)
+        ActivityTracker.stop()
+        val endTime = Instant.now().epochSecond
+
+        val result = ActivityTracker.getTrackedActivity()
+
+        assertThat(result.startInstant?.epochSecond, `is`(startTime))
+        assertThat(result.endInstant?.epochSecond, `is`(endTime))
+        assertThat(result.duration?.seconds, `is`(seconds))
+        assertThat(result.route, `is`(encodedRoute))
+    }
+
+    @Test
+    fun getTrackedActivity_started_and_not_stopped_throws_illegalstate_exception() {
+        expectedExceptioneption.expect(IllegalStateException::class.java)
+        expectedExceptioneption.expectMessage("ActivityTracker is still running. A TrackedActivity can only be obtained from a stopped ActivityTracker. Call stop first")
+        ActivityTracker.start()
+        ActivityTracker.getTrackedActivity()
+
+    }
+
 
 }
