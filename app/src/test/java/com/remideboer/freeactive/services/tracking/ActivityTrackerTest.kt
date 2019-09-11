@@ -5,8 +5,7 @@ import com.remideboer.freeactive.services.tracking.ActivityTracker.StateChangeLi
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.contains
-import org.hamcrest.Matchers.greaterThan
+import org.hamcrest.Matchers.*
 import org.junit.After
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -307,6 +306,37 @@ class ActivityTrackerTest {
         assertThat(route[1], `is`(positions[1]))
         assertThat(route[2], `is`(positions[2]))
 
+    }
+
+    @Test
+    fun start_already_started_resets_data_start_time(){
+        ActivityTracker.start()
+        val start = ActivityTracker.getStartTime()
+        Thread.sleep(2000)
+        ActivityTracker.stop()
+
+        ActivityTracker.start()
+        val start2 = ActivityTracker.getStartTime()
+        ActivityTracker.stop()
+
+        assertThat(start2.epochSecond, not(`is`(start.epochSecond)))
+    }
+
+    @Test
+    fun start_already_started_resets_data_duration(){
+        // have the second duration be smaller then first
+        // that would be impossible without a reset
+        ActivityTracker.start()
+        Thread.sleep(2000)
+        ActivityTracker.stop()
+        val duration1 = ActivityTracker.getDuration()
+
+        ActivityTracker.start()
+        Thread.sleep(1000)
+        ActivityTracker.stop()
+        val duration2 = ActivityTracker.getDuration()
+
+        assertThat(duration2.seconds, lessThan(duration1.seconds))
     }
 
 }

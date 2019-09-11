@@ -34,16 +34,6 @@ object ActivityTracker {
      */
     private val stopWatch by lazy { StopWatch() }
 
-    fun start() {
-        // starts activity tracking using Apache Stopwatch
-        reset() // reset data
-        stopWatch.start()
-        // update listeners
-        for (listener in stateChangeListeners){
-            listener.onStart()
-        }
-    }
-
     fun getStartTime(): Instant {
         return Instant.ofEpochMilli(stopWatch.startTime)
     }
@@ -52,27 +42,44 @@ object ActivityTracker {
         return Duration.ofMillis(stopWatch.time)
     }
 
+    fun start() {
+        // starts activity tracking using Apache Stopwatch
+        reset() // reset data
+        stopWatch.start()
+        // update listeners
+        for (listener in stateChangeListeners) {
+            listener.onStart()
+        }
+    }
+
     fun stop() {
         // stops everything
         // could build data object on stop
-        stopWatch.stop()
-        endTime = Instant.now()
-        for(listener in stateChangeListeners){
-            listener.onStop()
+        if (stopWatch.isStarted) {
+            stopWatch.stop()
+            endTime = Instant.now()
+            for (listener in stateChangeListeners) {
+                listener.onStop()
+            }
         }
     }
 
     fun pause() {
-        stopWatch.suspend()
-        for(listener in stateChangeListeners){
-            listener.onPause()
+        // check state
+        if (stopWatch.isSuspended.not()) {
+            stopWatch.suspend()
+            for (listener in stateChangeListeners) {
+                listener.onPause()
+            }
         }
     }
 
     fun resume() {
-        stopWatch.resume()
-        for(listener in stateChangeListeners){
-            listener.onResume()
+        if (stopWatch.isSuspended) {
+            stopWatch.resume()
+            for (listener in stateChangeListeners) {
+                listener.onResume()
+            }
         }
     }
 
@@ -89,7 +96,7 @@ object ActivityTracker {
     }
 
     fun reset() {
-        if(stopWatch.isStarted){
+        if (stopWatch.isStarted) {
             stopWatch.stop()
         }
 
@@ -108,6 +115,10 @@ object ActivityTracker {
 
     fun isTracking(): Boolean {
         return stopWatch.isStarted
+    }
+
+    fun isPaused(): Boolean {
+        return stopWatch.isSuspended
     }
 
     /**

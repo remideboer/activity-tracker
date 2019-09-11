@@ -4,5 +4,6 @@
     <string name="notification_stop">stop</string>
     <string name="notification_resume">resume</string>
     <string name="notification_pause">pause</string>
-    <string name="notification_tracker_title">Free Active is Tracking</string>
+    <string name="notification_tracker_title_tracking_ongoing">Free Active is Tracking</string>
+    <string name="notification_tracker_title_tracking_paused">Free Active Tracking Paused</string>
 </resources>

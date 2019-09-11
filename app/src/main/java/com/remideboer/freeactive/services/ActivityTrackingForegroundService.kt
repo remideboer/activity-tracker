@@ -21,14 +21,11 @@ import org.apache.commons.lang3.time.DurationFormatUtils
 
 
 private const val NOTIFICATION_CODE = 123
-
 private const val ACTION_STOP = "STOP"
 private const val ACTION_PAUSE = "PAUSE"
 private const val ACTION_RESUME = "RESUME"
-
 private const val DELAY_INTERVAL = 1000L
-
-private val MINIMAL_DISPLACEMENT = 10.0 // in meters
+private const val MINIMAL_DISPLACEMENT = 10.0 // in meters
 
 /**
  * Tracks current ongoing activity
@@ -44,7 +41,7 @@ class ActivityTrackingForegroundService : Service() {
     }
     private val notificationBuilder by lazy(LazyThreadSafetyMode.NONE) {
         NotificationCompat.Builder(this, App.NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(resources.getString(R.string.notification_tracker_title))
+            .setContentTitle(resources.getString(R.string.notification_tracker_title_tracking_ongoing))
             .setContentIntent(mainIntent)
             .setSmallIcon(R.drawable.ic_icon_eye)
             .setOngoing(true) // so it can't be dismissed by the user
@@ -81,17 +78,12 @@ class ActivityTrackingForegroundService : Service() {
 
     private val notificationUpdater: Runnable by lazy {
         Runnable {
-            val text = """
-            Duur: ${DurationFormatUtils.formatDuration(
-                ActivityTracker.getDuration().toMillis(),
-                "H:mm:ss",
-                true
-            )}
-            Afstand: %.0f meter
-            Gemiddelde snelheid: %.0f km/u
-        """.trimIndent().format(ActivityTracker.getDistance(), ActivityTracker.getAverageSpeedKMPH())
-            updateNotification(text)
-            handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
+            // check if is paused or stopped to update gets not posted a final time after
+            // remove and restarting te update cycle again
+            if(ActivityTracker.isPaused().not()){
+                updateNotification(getActivityTrackingText())
+                handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
+            }
         }
     }
 
@@ -160,11 +152,16 @@ class ActivityTrackingForegroundService : Service() {
                     ActivityTracker.pause()
                     handler.removeCallbacks(notificationUpdater)
                     stopLocationUpdates()
+                    // show paused text
+                    updateNotification(
+                        getActivityTrackingText(),
+                        resources.getString(R.string.notification_tracker_title_tracking_paused) )
                 }
                 ACTION_RESUME -> {
                     ActivityTracker.resume()
                     handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
                     startLocationUpdates()
+                    updateNotification(getActivityTrackingText())
                 }
                 ACTION_STOP -> {
                     ActivityTracker.stop()
@@ -187,13 +184,27 @@ class ActivityTrackingForegroundService : Service() {
         return START_STICKY
     }
 
-    private fun updateNotification(text: String) {
+    private fun updateNotification(text: String, title: String = resources.getString(R.string.notification_tracker_title_tracking_ongoing)) {
+        notificationBuilder.setContentTitle(title)
         notificationBuilder.setContentText(text)
         notificationBuilder.setStyle(
             NotificationCompat.BigTextStyle()
                 .bigText(text)
         )
         notificationManager.notify(NOTIFICATION_CODE, notificationBuilder.build())
+    }
+
+    private fun getActivityTrackingText(): String {
+        return """
+                Duur: ${DurationFormatUtils.formatDuration(
+            ActivityTracker.getDuration().toMillis(),
+            "H:mm:ss",
+            true
+        )}
+                Afstand: %.0f meter
+                Gemiddelde snelheid: %.0f km/u
+            """.trimIndent()
+            .format(ActivityTracker.getDistance(), ActivityTracker.getAverageSpeedKMPH())
     }
 
     override fun onDestroy() {
