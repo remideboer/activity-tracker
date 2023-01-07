@@ -1,13 +1,18 @@
 package com.remideboer.freeactive.services
 
+import android.Manifest
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.IBinder
+import android.os.PowerManager
+import android.os.PowerManager.WakeLock
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
 import com.google.android.gms.location.*
@@ -87,6 +92,11 @@ class ActivityTrackingForegroundService : Service() {
         }
     }
 
+    private val wakeLock: WakeLock by lazy {
+        (getSystemService(POWER_SERVICE) as PowerManager).
+            newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG)
+    }
+
     private lateinit var lastTrackedLocation: LatLng
     private val locationRequest by lazy(LazyThreadSafetyMode.NONE) {
         LocationRequest.create()?.apply {
@@ -137,9 +147,28 @@ class ActivityTrackingForegroundService : Service() {
         startForeground(NOTIFICATION_CODE, notificationBuilder.build())
 
         // starting updates as soon as possible to have a decent location
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
         fusedLocationClient.lastLocation.addOnSuccessListener {
             lastTrackedLocation = LatLng(it.latitude, it.longitude)
         }
+        // newer Android API uses different approach to keep the service alive android:foregroundServiceType="location"
+        acquireWakeLock()
 
         startLocationUpdates()
     }
@@ -151,6 +180,7 @@ class ActivityTrackingForegroundService : Service() {
                 ACTION_PAUSE -> {
                     ActivityTracker.pause()
                     handler.removeCallbacks(notificationUpdater)
+                    releaseWakeLock()
                     stopLocationUpdates()
                     // show paused text
                     updateNotification(
@@ -160,12 +190,14 @@ class ActivityTrackingForegroundService : Service() {
                 ACTION_RESUME -> {
                     ActivityTracker.resume()
                     handler.postDelayed(notificationUpdater, DELAY_INTERVAL)
+                    acquireWakeLock()
                     startLocationUpdates()
                     updateNotification(getActivityTrackingText())
                 }
                 ACTION_STOP -> {
                     ActivityTracker.stop()
                     handler.removeCallbacks(notificationUpdater)
+                    releaseWakeLock()
                     stopLocationUpdates()
                     stopForeground(true)
                     stopSelf()
@@ -211,9 +243,43 @@ class ActivityTrackingForegroundService : Service() {
         ActivityTracker.reset()
         handler.removeCallbacks(notificationUpdater)
         stopLocationUpdates()
+        releaseWakeLock()
+    }
+
+    private fun acquireWakeLock() {
+        wakeLock.let {
+            if(!it.isHeld){
+                it.acquire()
+            }
+        }
+    }
+
+    private fun releaseWakeLock() {
+        wakeLock.let {
+            if (it.isHeld){
+                it.release()
+            }
+        }
     }
 
     private fun startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
     }
 
