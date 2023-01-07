@@ -8,13 +8,18 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.core.content.ContextCompat
 import com.karumi.dexter.Dexter
+import com.karumi.dexter.MultiplePermissionsReport
+import com.karumi.dexter.PermissionToken
+import com.karumi.dexter.listener.PermissionRequest
+import com.karumi.dexter.listener.multi.DialogOnAnyDeniedMultiplePermissionsListener
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import com.karumi.dexter.listener.single.PermissionListener
 import com.remideboer.freeactive.R
 import com.remideboer.freeactive.services.ActivityTrackingForegroundService
 
 import kotlinx.android.synthetic.main.activity_main.*
 import com.karumi.dexter.listener.single.DialogOnDeniedPermissionListener
-
+import org.jetbrains.anko.internals.AnkoInternals.createAnkoContext
 
 
 class MainActivity : AppCompatActivity() {
@@ -35,15 +40,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun askRuntimePermissions() {
-        val dialogPermissionListener = DialogOnDeniedPermissionListener.Builder
+        val dialogPermissionListener = DialogOnAnyDeniedMultiplePermissionsListener.Builder
             .withContext(this)
             .withTitle("Location Permission")
-            .withMessage("Location permission is needed to keep track of your route")
+            .withMessage("Background Location permission is needed to keep track of your route when screen is locked")
             .withButtonText(android.R.string.ok)
             .build()
 
-        Dexter.withActivity(this)
-            .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+        Dexter.withContext(this)
+            .withPermissions(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             .withListener(dialogPermissionListener)
             .check()
     }
